@@ -252,7 +252,16 @@ class CombinedAnalyzer:
         self.classifier = classifier or NSFWClassifier()
         self.policy = policy or VerdictPolicy()
 
-    def analyze(self, image: str | Path | np.ndarray) -> AnalysisResult:
+    def analyze(
+        self,
+        image: str | Path | np.ndarray,
+        policy: VerdictPolicy | None = None,
+    ) -> AnalysisResult:
+        # Allow a per-request policy so concurrent API calls do not mutate
+        # shared analyzer state. The Gradio UI still sets self.policy; passing
+        # nothing keeps the old behavior.
+        policy = policy or self.policy
+
         detection_result = self.detector.detect(image)
         nsfw_score = self.classifier.classify(image)
 
@@ -261,14 +270,14 @@ class CombinedAnalyzer:
         #   2) Face-based opposite-gender suppression
         #   3) Cross-class conflict resolution (drop both on contradiction)
         boosted, boost_notes = _boost_male_scores(
-            detection_result.detections, self.policy
+            detection_result.detections, policy
         )
         face_filtered, face_notes = _apply_face_gender_filter(
-            boosted, self.policy
+            boosted, policy
         )
-        deduped, conflict_notes = _resolve_conflicts(face_filtered, self.policy)
+        deduped, conflict_notes = _resolve_conflicts(face_filtered, policy)
 
-        verdict, reason = _compute_verdict(nsfw_score, deduped, self.policy)
+        verdict, reason = _compute_verdict(nsfw_score, deduped, policy)
 
         return AnalysisResult(
             verdict=verdict,

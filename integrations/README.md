@@ -97,6 +97,18 @@ Returns the active thresholds. Useful for debugging "why was X blocked?".
 ### `POST /check`
 Multipart upload, field name `file`. Returns the JSON shown above.
 
+Optional multipart fields override the production policy for this request only:
+`resolution` (320/640/1024/1280), `display_threshold`, `nsfw_block_threshold`,
+`nsfw_review_threshold`, `explicit_block_threshold`, `explicit_review_threshold`,
+`male_score_boost` (1..4). Omitting a field keeps the env/`/policy` default.
+Resolution 1280 is loaded lazily on first use; expect a slower first request and
+extra model memory. The response echoes `inference_resolution`, `display_threshold`
+and `policy` so callers can log exactly what ran.
+
+> **Security:** request overrides can make the policy looser. Keep `/check` on a
+> trusted internal network (or put an authenticated reverse proxy in front). Do not
+> expose the override-capable endpoint directly to untrusted clients.
+
 Only JPEG is accepted (`MOD_FORMATS`), one frame, at most `MOD_MAX_SIDE` pixels a side (2048): other formats get 415, larger images 413.
 `POST /check_url` was removed: it could be pointed at addresses inside the server.
 

@@ -215,14 +215,14 @@ def analyze(
 
     try:
         analyzer = get_analyzer(int(resolution))
-        analyzer.policy = VerdictPolicy(
+        policy = VerdictPolicy(
             nsfw_block_threshold=nsfw_block_threshold,
             nsfw_review_threshold=nsfw_review_threshold,
             explicit_block_threshold=explicit_block_threshold,
             explicit_review_threshold=explicit_review_threshold,
             male_score_boost=male_score_boost,
         )
-        result = analyzer.analyze(tmp_path)
+        result = analyzer.analyze(tmp_path, policy=policy)
     finally:
         Path(tmp_path).unlink(missing_ok=True)
 
