@@ -107,6 +107,41 @@ The `/check` endpoint takes a multipart image upload and returns a verdict:
 curl -X POST http://127.0.0.1:8000/check -F "file=@your_image.jpg"
 ```
 
+Optional request-scoped overrides can be sent as additional multipart fields.
+Omitting them keeps the production defaults from env/`/policy`:
+
+| Field | Values | Effect |
+|---|---|---|
+| `resolution` | `320` / `640` / `1024` / `1280` | Selects (and lazily caches) a detector at that input size. 1280 can catch smaller regions but is slower and uses more memory. |
+| `nsfw_block_threshold` | 0..1 | Whole-image NSFW BLOCK cutoff |
+| `nsfw_review_threshold` | 0..1 | Whole-image NSFW REVIEW cutoff |
+| `explicit_block_threshold` | 0..1 | Detector explicit BLOCK cutoff |
+| `explicit_review_threshold` | 0..1 | Detector explicit REVIEW cutoff |
+| `male_score_boost` | 1..4 | Male-class score multiplier |
+| `display_threshold` | 0..1 | Only filters returned detections; does not change the verdict |
+
+```bash
+# Re-check a borderline image with higher resolution and a stricter policy
+curl -X POST http://127.0.0.1:8000/check \
+  -F "file=@your_image.jpg" \
+  -F "resolution=1280" \
+  -F "nsfw_block_threshold=0.60" \
+  -F "nsfw_review_threshold=0.25"
+```
+
+The original one-field call is unchanged. The response also echoes the settings
+that were actually used (`inference_resolution`, `display_threshold`, `policy`).
+
+After deploying the patched server, verify it with:
+
+```bash
+python smoke_check_overrides.py --base http://127.0.0.1:8000 --image sample.jpg
+```
+
+> **Security:** overrides can loosen the policy. Keep this endpoint on a trusted
+> network, or put an authenticated reverse proxy in front of it. Do not expose a
+> threshold-override-capable `/check` directly to untrusted clients.
+
 Response:
 ```json
 {
