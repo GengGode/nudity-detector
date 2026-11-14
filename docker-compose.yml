@@ -13,7 +13,7 @@ services:
     image: moderationkit:latest
     container_name: moderationkit-api
     ports:
-      - "8000:8000"
+      - "18000:8000"
     environment:
       MOD_INFERENCE_RESOLUTION: "1024"
       MOD_DISPLAY_THRESHOLD: "0.15"

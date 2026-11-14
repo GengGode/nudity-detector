@@ -21,6 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy app code
 COPY *.py ./
 COPY integrations/ ./integrations/
+COPY models_640m.onnx ./
 
 # Pre-download both models at build time so cold starts are fast.
 # - NudeNet 640m via our download script
